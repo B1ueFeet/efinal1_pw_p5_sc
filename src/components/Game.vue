@@ -1,56 +1,28 @@
 <template>
-    <div>
-        <img v-if="img" v-bind:src="img" alt="No se puede visualizar la imagen" />
-        <h1>{{ respuesta }}</h1>
-    </div>
+  <div class="image">
+    <img :src="urlImg" alt="No se puede Mostrar">
+    <label>{{texto}}</label>
+  </div>
 </template>
-  
+
 <script>
 export default {
-    data() {
-        return {
-            respuesta: null,
-            image: null,
-            jackpot: false,
-        };
-    },
-    methods: {
-        async consumirApi() {
-            this.think()
-            const { answer, image } = await fetch("https://yesno.wtf/api").then(
-                (respuesta) => respuesta.json()
-            );
-            console.log(answer);
-            console.log(image);
-            this.respuesta = answer;
-            this.img = image;
+    props:{
+        texto:{
+            type: String,
         },
-        async think() {
-            this.respuesta = "pensando."
-            this.respuesta = "pensando.."
-            this.respuesta = "pensando..."
-            this.respuesta = "pensando...."
+        urlImg:{
+            type: String,
         }
-    },
-    watch: {
-        respuesta(value, oldValue) {
-            console.log(value);
-            console.log(oldValue);
-            if(this.respuesta === "yes" || this.respuesta ==="no"){
-                this.jackpot = true;
-            }else{
-                this.jackpot = false;
-            }
-            console.log(this.jackpot)
-        }
-    }
-
-};
+    }   
+}
 </script>
-  
+
 <style>
-img {
-    height: 300px;
-    width: 300px;
+.image{
+  display: grid;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
 }
 </style>

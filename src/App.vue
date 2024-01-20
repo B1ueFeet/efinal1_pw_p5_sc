@@ -1,106 +1,170 @@
 <template>
-  <div v-if="perdio">
-    <h1>Has utilizado tus 5 intentos
-El juego ha termindo, intentalo nuevamente</h1>
+  <div class="container" v-if="showGame">
+    <div class="head">
+      <h1>Casino Pokemon</h1>
+      <h2>Puntaje: {{ puntaje }}</h2>
+      <h2>Intento: {{ intento }}</h2>
+    </div>
+    <Game :texto="text1" :urlImg="url1" />
+    <Game :texto="text2" :urlImg="url2" />
+    <Game :texto="text3" :urlImg="url3" />
+    <button class="jugar" @click="jugar">Jugar</button>
   </div>
-  <div class="tablero">
-    <h1>Score {{ score }}</h1>
-    <h1>Intento {{ intento }}</h1>
+  <div class="win" v-if="showWin">
+    <h1>Puntaje: {{ puntaje }}</h1>
+    <h1>Felicitaciones has ganado un premio de $10.000,00</h1>
+    <button class="new_game" @click="reiniciar">Nuevo Juego</button>
   </div>
-  <div class="container">
-    <Game ref="g1" />
-    <Game ref="g2" />
-    <Game ref="g3" />
+  <div class="loose" v-if="showLooser">
+    <h1>Hasutilizado tus 5 intentos</h1>
+    <h1>El juego ha termindo, intentalo nuevamente</h1>
+    <button class="new_game" @click="reiniciar">Nuevo Juego</button>
   </div>
-  <button v-on:click="jugar()">{{ txt_jugar }}</button>
 </template>
 
 <script>
-import Game from './components/Game.vue'
+import Game from "./components/Game.vue";
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    Game
+    Game,
   },
   data() {
     return {
-      score: 0,
+      puntaje: 0,
       intento: 0,
-      txt_jugar: "Jugar",
-      calcular: false,
-      mensaje: null,
-      gano: false,
-      perdio: false,
+      url1: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg",
+      url2: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/2.svg",
+      url3: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/3.svg",
+      text1: "xxxxxxxxxx",
+      text2: "xxxxxxxxxx",
+      text3: "xxxxxxxxxx",
+      showWin: false,
+      showLooser: false,
+      showGame: true,
     };
   },
   methods: {
-    jugar() {
-      if (this.intento < 6 && this.score < 11) {
-        this.intento++
-        this.$refs.g1.consumirApi();
-        this.$refs.g2.consumirApi();
-        this.$refs.g3.consumirApi();
-      }else if (this.intento > 6){
-        this.perdio = true;
+    async jugar() {
+      var data = [
+        await this.consumirAPI(),
+        await this.consumirAPI(),
+        await this.consumirAPI(),
+      ];
+      this.text1 = data[0].answer;
+      this.text2 = data[1].answer;
+      this.text3 = data[2].answer;
+      this.url1 = data[0].image;
+      this.url2 = data[1].image;
+      this.url3 = data[2].image;
+
+      this.evaluarResultado();
+    },
+    async consumirAPI() {
+      return await fetch("https://yesno.wtf/api").then((r) => r.json());
+    },
+    evaluarResultado() {
+      this.intento++;
+      var aux = 0;
+
+      if (this.text1 === "yes") aux++;
+      if (this.text2 === "yes") aux++;
+      if (this.text3 === "yes") aux++;
+
+      if (aux === 3) this.puntaje += 5;
+      if (aux === 2) this.puntaje += 2;
+      if (aux === 1) this.puntaje += 1;
+
+      if (this.puntaje >= 10) {
+        this.showWin = true;
+        this.showLooser = false;
+        this.showGame = false;
+      }
+      if (this.intento >= 5) {
+        this.showLooser = true;
+        this.showWin = false;
+        this.showGame = false;
       }
     },
-    calcularScore() {
-
-      const s1 = this.$refs.g1.respuesta === "yes"? 1:0;
-      const s2 = this.$refs.g2.respuesta === "yes"? 1:0;
-      const s3 = this.$refs.g3.respuesta=== "yes"? 1:0;
-
-      var score_aux = 0;
-      if ((s1+s2+s3) === 3) {
-        score_aux += 5;
-      } else if ((s1+s2+s3) === 2){
-        score_aux += 3;
-      }else if ((s1+s2+s3) === 2){
-        score_aux += 1;
-      }
-      this.score += score_aux;
+    reiniciar() {
+      this.puntaje = 0;
+      this.intento = 0;
+      this.url1 =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg";
+      this.url2 =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/2.svg";
+      this.url3 =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/3.svg";
+      this.text1 = "xxxxxxxxxx";
+      this.text2 = "xxxxxxxxxx";
+      this.text3 = "xxxxxxxxxx";
+      this.showWin = false;
+      this.showLooser = false;
+      this.showGame = true;
     },
   },
-  watch: {
-    intento(value, oldValue) {
-      const s1 = this.$refs.g1.jackpot;
-      const s2 = this.$refs.g2.jackpot;
-      const s3 = this.$refs.g3.jackpot;
-
-      console.log("Calcular")
-      console.log(s1)
-      console.log(s2)
-      console.log(s3)
-
-      if (s1 && s2 && s3) {
-        this.calcularScore()
-      }
-    }
-  }
-}
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+img {
+  height: 200px;
+  width: 200px;
+}
+
+body{
+  font-size: 20px;
 }
 
 .container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  /* Espacio entre las columnas */
+  grid-template-columns: repeat(3, 300);
+  justify-content: center;
+  background: whitesmoke;
+  width: auto;
+  justify-content: center;
+  text-align: center;
+  margin: 50px;
+  border-radius: 15px;
+  padding: 30px;
+}
+.head {
+  grid-column: span 3;
+  display: grid;
+  grid-template-columns: repeat(2, 450px);
+}
+h1,
+.jugar {
+  grid-column: span 3;
 }
 
-.tablero {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  /* Espacio entre las columnas */
+.win,
+.loose {
+  background: whitesmoke;
+  width: auto;
+  justify-content: center;
+  text-align: center;
+  margin: 50px;
+  border-radius: 15px;
+  padding: 30px;
+}
+
+.win {
+  color: blue;
+}
+
+.new_game {
+  width: 300px;
+}
+
+button{
+    margin: 30px 10px;
+    padding: 20px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.loose {
+  color: red;
 }
 </style>
